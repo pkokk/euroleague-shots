@@ -5,13 +5,22 @@ class Player():
     name : string
     '''
     def __init__(self,playerid,name):
-        self.playerid=playerid
-        self.name=name 
+        self.__playerid=playerid
+        self.name=name
+
+    def __str__(self):
+        return "Player(" + self.playerid + ", " + self.name + ")"
+
+    @property
+    def playerid(self):
+        return self.__playerid
+
+    def get_team(self,df,season):
+        #_res = df.loc[(df['season'] == season) & (df['playerid'] == self.playerid)]
+        _res = df[(df['season']== season) & (df['playerid'] == self.playerid)].iloc[0]['team']
+        print(_res)
+
     
     def __eq__(self,other):
-        return self.__dict__ == other.__dict__  
-
-
-#NOTE
-# I will instantiate players from [team]_players.json, so that I get team per season  
+        return self.__dict__ == other.__dict__ 
     
