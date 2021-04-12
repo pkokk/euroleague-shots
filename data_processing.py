@@ -75,7 +75,7 @@ shots = [Shot(shot['ID_PLAYER']+str(shot['UTC']),shot['ID_PLAYER'],shot['COORD_X
 
 #Create court
 c = Court()
-# p = c.draw_court()
+p = c.draw_court()
 
 #Choose binning dimensions of court
 bins_l_dim = 10
@@ -99,55 +99,86 @@ for i in np.arange(court_bounds['x_low'],court_bounds['x_up'], xstep):
         bins.append(Bin(binid,bin_def))
         # print(i,j,j,i+xstep)
         binid+=1
-print(bins[0].x_bound_up)
-print(bins[0].y_bound_up)
-print(bins[0].x_bound_down)
-print(bins[0].y_bound_down)
 
-tot = {}
+ 
+totals_cols= ['2p','3p','ft','3pct','2pct','ftpct','2px','2py','3px','3py','2pTot','3pTot','ftTot','3pctTot','2pctTot','ftpctTot','player','season']
+
+totals = Lib.create_empty_dataframe(totals_cols)
+
 for season in seasons:
-    tot[season.get_int()] = {  b.binid :b.calc_shots(shots,season.get_int(),players)  for b in bins }
+    for b in bins:
+        #calculate every aggregated shot group for every player for every bin (court division)
+        a = b.calc_shots(shots,season.season,players)
+        #create a dataframe out of players dict
+        df = pd.DataFrame.from_dict(a,orient='index')
+        player_l = df.index.tolist()
+        #transpose into columns the Total rows for every bin . Comparable to a case statement to create col in sql
+        df['player'] = player_l
+        df['2pTot'] = df['Total':]['2pTot'][0]
+        df['3pTot'] = df['Total':]['3pTot'][0]
+        df['ftTot'] = df['Total':]['ftTot'][0]
+        df['3pctTot'] = df['Total':]['3pctTot'][0]
+        df['2pctTot'] = df['Total':]['2pctTot'][0]
+        df['ftpctTot'] = df['Total':]['ftpctTot'][0]
+        df['season'] = season.season
+        #Now drop rows with totals. We have them in cols
+        df.drop(['Total'],inplace=True)
+        #append every df to the totals one
+        totals = totals.append(df,sort=False)
 
-print(tot[2017][66])
+#attempted free throw data is not available, so not included in our analysis 
+totals.drop(['ft', 'ftpct','ftTot','ftpctTot'], axis=1,inplace=True)
+totals.reset_index(inplace=True)
+#create df specific for 2 point shots
+df_2p = totals.loc[totals['2px'].notnull(),['2p','2pct','2px','2py','2pctTot','player','season']]
+#create df specific for 3 point shots
+df_3p = totals.loc[totals['3px'].notnull(),['3p','3pct','3px','3py','3pctTot','player','season']]
 
-# for item in tot:
-#     print(item)
-        
+#change column names to generic
+df_2p.columns = ['nr_player_shots','pct_player','x_agg','y_agg','pct_total','playerid','season']
+df_3p.columns = ['nr_player_shots','pct_player','x_agg','y_agg','pct_total','playerid','season']
+
+#create pct_diff col, where the player fg pct in bin/season subtract the total pct for bin/season.
+#we want to assess how good player is compared to competition
+df_2p['pct_diff']=  df_2p['pct_player'] - df_2p['pct_total']
+df_3p['pct_diff']=  df_3p['pct_player'] - df_3p['pct_total']
+
+#create class for number of players shots in bin compared to players max shots in a bin
+df_2p['max_player_shots_any_bin'] = df_2p.groupby(['playerid','season'])['nr_player_shots'].transform('max')
+df_2p['class_nr_shots'] = 1
+df_2p.loc[df_2p['nr_player_shots']/df_2p['max_player_shots_any_bin'] >= 1/3, 'class_nr_shots'] = 2
+df_2p.loc[df_2p['nr_player_shots']/df_2p['max_player_shots_any_bin'] >= 2/3, 'class_nr_shots'] = 3
+df_2p.drop('max_player_shots_any_bin',inplace=True,axis=1)
+
+df_3p['max_player_shots_any_bin'] = df_3p.groupby(['playerid','season'])['nr_player_shots'].transform('max')
+df_3p['class_nr_shots'] = 1
+df_3p.loc[df_3p['nr_player_shots']/df_3p['max_player_shots_any_bin'] >= 1/3, 'class_nr_shots'] = 2
+df_3p.loc[df_3p['nr_player_shots']/df_3p['max_player_shots_any_bin'] >= 2/3, 'class_nr_shots'] = 3
+df_3p.drop('max_player_shots_any_bin',inplace=True,axis=1)
+
+
+#Union 2p and 3p
+final = df_2p.append(df_3p)
+
+#Enrich final df with player name and team for every season
+final = pd.merge(final,players_df[['team','playerid', 'name','season']], how='left', left_on=['playerid','season'], right_on = ['playerid','season'])
+
+final['name'] = final['name'].str.replace(',','-')
+final = final.astype({'nr_player_shots': 'int32','season': 'int32'})
+
+#Bulk insert to Postgres
+DATABASE = os.environ.get("DATABASE")
+USER = os.environ.get("USER")
+PASSWD = os.environ.get("PASSWD")
+HOST = os.environ.get("HOST")
+PORT = os.environ.get("PORT")
+con = Postgres(database=DATABASE, user=USER, passwd=PASSWD, host=HOST, port=PORT)
+con.bulk_insert('shots_agg',final) 
+
+con.close()
 
 
 
-'''
-# from bokeh.io import curdoc, show
-# from bokeh.models import ColumnDataSource, Grid, HexTile, LinearAxis, Plot,Range1d
-# from bokeh.util.hex import hexbin
-
-
-# import numpy as np
-
-# from bokeh.io import output_file, show
-# from bokeh.plotting import figure
-# from bokeh.transform import linear_cmap
-# from bokeh.util.hex import hexbin
-
-
-# xcord = [shot.x for shot in shots]
-# ycord = [shot.y for shot in shots]
-# x = np.array(xcord)
-# y = np.array(ycord)
-
-# bins = hexbin(x, y, 10)
-# print(bins)
-
-
-# c = Court()
-# p = c.draw_court()
-
-# p.hex_tile(q="q", r="r", size=10, line_color=None, source=bins)
-
-# output_file("hex_tile.html")
-
-show(p)
-'''
 
 
 
