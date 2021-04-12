@@ -4,9 +4,10 @@ class Season():
     
     def __str__(self):
         return str(self.season_int)
-        
-    def get_int(self):
-        return(self.season_int)
+
+    @property
+    def season(self):
+        return self.season_int
     
     def construct_team_player_dict(self,df):
         '''

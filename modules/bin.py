@@ -44,7 +44,6 @@ class Bin():
 
     def calc_shots(self,shotlist,season,players):
         self.__player_shot_dict = {}
-        self.__shot_dict = {}
         _three_total_cnt = 0
         _two_total_cnt = 0
         _ft_total_cnt = 0
@@ -77,7 +76,9 @@ class Bin():
                             _player_two_made_cnt += 1
                             _player_two_total_cnt +=1
                             _two_made_cnt += 1
-                            _two_total_cnt +=1                            
+                            _two_total_cnt +=1  
+                            _player_two_x +=shot.x
+                            _player_two_y +=shot.y                          
                         elif shot.action == '3FGA' :
                             _player_three_total_cnt += 1
                             _three_total_cnt += 1
@@ -87,7 +88,9 @@ class Bin():
                             _player_three_made_cnt += 1  
                             _player_three_total_cnt += 1      
                             _three_made_cnt += 1  
-                            _three_total_cnt += 1                                                    
+                            _three_total_cnt += 1  
+                            _player_three_x +=shot.x
+                            _player_three_y +=shot.y                                                    
                         elif shot.action == 'FTA' :
                             _player_ft_total_cnt += 1
                             _ft_total_cnt += 1
@@ -98,32 +101,32 @@ class Bin():
                             _ft_total_cnt  += 1 
 
                 
-
-                self.__player_shot_dict[player.playerid] = {
-                    '2p' : _player_two_total_cnt,
-                    '3p' : _player_three_total_cnt,
-                    'ft' : _player_ft_total_cnt,
-                    '3pct' : round(float(_player_three_made_cnt/_player_three_total_cnt),4) if _player_three_total_cnt > 0 else None ,
-                    '2pct' : round(float(_player_two_made_cnt/_player_two_total_cnt),4) if _player_two_total_cnt > 0 else None,
-                    'ftpct' : round(float(_player_ft_made_cnt/_player_ft_total_cnt),4) if _player_ft_total_cnt > 0 else None,
-                    '2px' : _player_two_x/_player_two_total_cnt if _player_two_total_cnt > 0 else None ,           
-                    '2py' : _player_two_y/_player_two_total_cnt  if _player_two_total_cnt > 0 else None,
-                    '3px' : _player_three_x/_player_three_total_cnt if _player_three_total_cnt > 0 else None,           
-                    '3py' : _player_three_y/_player_three_total_cnt if _player_three_total_cnt > 0 else None
-                    } 
+                if _player_two_total_cnt > 0 or _player_three_total_cnt > 0:
+                    self.__player_shot_dict[player.playerid] = {
+                        '2p' : _player_two_total_cnt,
+                        '3p' : _player_three_total_cnt,
+                        'ft' : _player_ft_total_cnt,
+                        '3pct' : round(float(_player_three_made_cnt/_player_three_total_cnt),4) if _player_three_total_cnt > 0 else None ,
+                        '2pct' : round(float(_player_two_made_cnt/_player_two_total_cnt),4) if _player_two_total_cnt > 0 else None,
+                        'ftpct' : round(float(_player_ft_made_cnt/_player_ft_total_cnt),4) if _player_ft_total_cnt > 0 else None,
+                        '2px' : _player_two_x/_player_two_total_cnt if _player_two_total_cnt > 0 else None ,           
+                        '2py' : _player_two_y/_player_two_total_cnt  if _player_two_total_cnt > 0 else None,
+                        '3px' : _player_three_x/_player_three_total_cnt if _player_three_total_cnt > 0 else None,           
+                        '3py' : _player_three_y/_player_three_total_cnt if _player_three_total_cnt > 0 else None
+                        } 
                 
             
 
-        self.__shot_dict = {
-                    '2p' : _two_total_cnt,
-                    '3p' : _three_total_cnt,
-                    'ft' : _ft_total_cnt,
-                    '3pct' : round(float(_three_made_cnt/_three_total_cnt),4) if _three_total_cnt > 0 else None ,
-                    '2pct' : round(float(_two_made_cnt/_two_total_cnt),4) if _two_total_cnt > 0 else None,
-                    'ftpct' : round(float(_ft_made_cnt/_ft_total_cnt),4) if _ft_total_cnt > 0 else None
+        self.__player_shot_dict['Total'] = {
+                    '2pTot' : _two_total_cnt,
+                    '3pTot' : _three_total_cnt,
+                    'ftTot' : _ft_total_cnt,
+                    '3pctTot' : round(float(_three_made_cnt/_three_total_cnt),4) if _three_total_cnt > 0 else None ,
+                    '2pctTot' : round(float(_two_made_cnt/_two_total_cnt),4) if _two_total_cnt > 0 else None,
+                    'ftpctTot' : round(float(_ft_made_cnt/_ft_total_cnt),4) if _ft_total_cnt > 0 else None
                     }
 
-        return self.__shot_dict,self.__player_shot_dict
+        return self.__player_shot_dict
 
 
     def calculate_hextile(self):

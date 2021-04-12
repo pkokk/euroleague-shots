@@ -3,6 +3,8 @@ import re
 import json
 import pandas as pd
 import psycopg2
+from io import StringIO
+import psycopg2.extras as extras
 
 class Postgres:
     def __init__(self, **kwargs):
@@ -74,6 +76,48 @@ class Postgres:
                 self._set_exception(e)
         else:
             return -1
+
+    def _commit(self):
+        sql="""
+                COMMIT
+            """
+        
+        self._run_sql(sql) 
+
+    def _truncate(self,tbl):
+        sql='TRUNCATE {}'.format(tbl)
+        
+        self._run_sql(sql) 
+
+    def _replace_char(self,tbl, chr1,rpl):
+        statement = "UPDATE {0} set playername =  REPLACE(playername, '{1}', '{2}');".format(tbl,chr1,rpl)
+        
+        if self._exception is None:
+            try:    
+                self._run_sql(statement)
+                self._commit() 
+            except Exception as e:
+                self._set_exception(e)
+        else:
+            return -1
+
+
+    def bulk_insert(self,tbl,df, overwrite = True):
+        if overwrite:
+            self._truncate(tbl)
+
+        sio = StringIO()
+        sio.write(df.to_csv(index=None, header=None))  # Write the Pandas DataFrame as a csv to the buffer
+        sio.seek(0)  # Be sure to reset the position to the start of the stream
+
+        # Copy the string buffer to the database, as if it were an actual file
+        with self._connection.cursor() as c:
+            c.copy_from(sio, tbl, sep=',')
+            self._commit() 
+        
+        self._replace_char(tbl,"-",",")
+
+
     
 
 class File():
