@@ -1,7 +1,7 @@
 # euroleague-shots
 
 ## How to run ## 
-* Bullet list
+* First
 * asdf
 ## Short description ## 
 ## Challenges ##
