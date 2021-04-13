@@ -7,7 +7,7 @@ from modules.bin import *
 from modules.season import *
 from dotenv import load_dotenv, find_dotenv
 import numpy as np
-# import pandas as pd
+
 
 #Load .env file with parameters and get root folder
 load_dotenv(find_dotenv())
