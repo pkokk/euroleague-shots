@@ -3,7 +3,12 @@ from bokeh.plotting import figure
 
 class Court():
     def __init__(self,lcolor='black',**kwargs):
-        self.p = figure(plot_width=700, plot_height=700)
+        pl_wdt =  pl_hgt = 1400 
+        self.tooltips = kwargs.get('tooltips')
+        if self.tooltips:
+            self.p = figure(plot_width=pl_wdt, plot_height=pl_hgt,tooltips=self.tooltips,)
+        else:
+            self.p = figure(plot_width=pl_wdt, plot_height=pl_hgt)
         self.left, self.right, self.bottom, self.top = -800, 800, -200, 1500
         self.p.x_range=Range1d(self.left, self.right)
         self.p.y_range=Range1d(self.bottom, self.top)
