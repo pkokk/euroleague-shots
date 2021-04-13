@@ -1,8 +1,7 @@
 # euroleague-shots
 
 ## How to run ## 
-*first*
-*second*
+* Bullet list
 ## Short description ## 
 ## Challenges ##
 ## Future developments ##
