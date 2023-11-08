@@ -1,6 +1,6 @@
 from flask import Flask, render_template
 from bokeh.io import curdoc
-from bokeh.models import ColumnDataSource, Select,LinearColorMapper,ColorBar
+from bokeh.models import ColumnDataSource, Select, LinearColorMapper, ColorBar
 from bokeh.resources import INLINE
 from bokeh.embed import components
 from bokeh.plotting import figure
@@ -21,12 +21,13 @@ PASSWD = os.environ.get("PASSWD")
 HOST = os.environ.get("HOST")
 PORT = os.environ.get("PORT")
 
+
 @app.route('/')
 def index():
 
-
     def selecteddata():
-        con = psycopg2.connect(database=DATABASE, user=USER, password=PASSWD, host=HOST, port=PORT)
+        con = psycopg2.connect(database=DATABASE, user=USER,
+                               password=PASSWD, host=HOST, port=PORT)
         # print("Database opened successfully")
         cur = con.cursor()
         statement = """ 
@@ -52,21 +53,19 @@ def index():
         res = []
         for row in rows:
             record_dict = {
-                "classnrshots" : row[0],
-                "xagg" : row[1],
-                "nr_player_shots" : row[2],
-                "yagg" : row[3],
-                "pcttotal" : row[4],
-                "pctplayer" : row[5],
-                "season" : row[6],
-                "pctdiff" : row[7],
-                "playername" : str(row[8]),
-                "playerid" : str(row[9]),
-                "team" : str(row[10])
+                "classnrshots": row[0],
+                "xagg": row[1],
+                "nr_player_shots": row[2],
+                "yagg": row[3],
+                "pcttotal": row[4],
+                "pctplayer": row[5],
+                "season": row[6],
+                "pctdiff": row[7],
+                "playername": str(row[8]),
+                "playerid": str(row[9]),
+                "team": str(row[10])
             }
             res.append(record_dict)
-
-
 
         print("Data loaded")
         con.close()
@@ -108,32 +107,33 @@ def index():
         source.change.emit();
     """)
 
-    color_mapper = LinearColorMapper(palette=Turbo256,low=min([float(d['pctdiff']) for d in src]),high=max([float(d['pctdiff']) for d in src]))
+    color_mapper = LinearColorMapper(palette=Turbo256, low=min(
+        [float(d['pctdiff']) for d in src]), high=max([float(d['pctdiff']) for d in src]))
 
     c = Court(tooltips=[("Nr FG", "@nr_player_shots"), ("Pct", "@pctplayer")])
     fig = c.draw_court()
-    fig.circle(x="x", y="y", source=source, size="size",  line_color=None, color={'field': 'color', 'transform': color_mapper})
+    fig.circle(x="x", y="y", source=source, size="size",  line_color=None, color={
+               'field': 'color', 'transform': color_mapper})
     color_bar = ColorBar(color_mapper=color_mapper, label_standoff=12)
     fig.add_layout(color_bar, 'right')
 
     source.data = dict(
-        x = [float(d['xagg']) for d in src],
-        y = [float(d['yagg']) for d in src],
-        color = [float(d['pctdiff']) for d in src],
-        size = [int(d['classnrshots'])*3 for d in src],
-        nr_player_shots = [float(d['nr_player_shots']) for d in src],
-        pctplayer = [float(d['pctplayer'])*100.0 for d in src],
-        playername = [d['playername'] for d in src],
-        season = [int(d['season']) for d in src]
+        x=[float(d['xagg']) for d in src],
+        y=[float(d['yagg']) for d in src],
+        color=[float(d['pctdiff']) for d in src],
+        size=[int(d['classnrshots'])*3 for d in src],
+        nr_player_shots=[float(d['nr_player_shots']) for d in src],
+        pctplayer=[float(d['pctplayer'])*100.0 for d in src],
+        playername=[d['playername'] for d in src],
+        season=[int(d['season']) for d in src]
 
     )
-    
 
     for single_control in controls_array:
         single_control.js_on_change('value', callback)
 
     inputs_column = column(*controls_array, width=220, height=300)
-    layout_row = column ([ inputs_column, fig ])
+    layout_row = column([inputs_column, fig])
 
     script, div = components(layout_row)
     return render_template(
@@ -147,4 +147,3 @@ def index():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
